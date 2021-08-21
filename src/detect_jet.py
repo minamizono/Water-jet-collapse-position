@@ -1,5 +1,11 @@
 import cv2
 import numpy as np
+
+#読見込む画像フォルダ
+input_folder = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\input')
+#書き出す画像フォルダ
+output_folder = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output')
+
 #画像の読み込み
 calib_img=cv2.imread(r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\input\calib.bmp',cv2.IMREAD_GRAYSCALE)
 calib_img=calib_img.astype(np.float32)
@@ -14,7 +20,6 @@ diff_img=diff_img.astype(np.uint8)
 height, width = calib_img.shape[:2]
 blank_img = np.zeros((height, width, 3))
 blank_img += 255 #←全ゼロデータに255を足してホワイトにする
-
 
 ###差分画像出力
 ###cv2.imwrite('diff_img.jpg', diff_img)
@@ -34,4 +39,4 @@ max_contour = max(contours, key=lambda x: cv2.contourArea(x))
 #白色画像に最大輪郭を描きだす
 img_contour = cv2.drawContours(blank_img, max_contour, -1, (000, 000, 000), 1)
 
-cv2.imwrite('jet.edge.jpg',img_contour)
+cv2.imwrite(output_folder+'/jet_surface.png',img_contour)
