@@ -40,3 +40,6 @@ max_contour = max(contours, key=lambda x: cv2.contourArea(x))
 img_contour = cv2.drawContours(blank_img, max_contour, -1, (000, 000, 000), 1)
 
 cv2.imwrite(output_folder+'/jet_surface.png',img_contour)
+
+
+print(max_contour.flatten())

@@ -1,16 +1,18 @@
 import cv2
 import numpy as np
 
-
+#フォルダ指定
+output_folder = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output')
 
 # 画像読み込み
-img = cv2.imread(r"C:\code\jet\Water-jet-collapse-position\calib.bmp")
-img2 = img.copy()
-img3 = cv2.imread(r'C:\code\jet\Water-jet-collapse-position\muji.jpg')
-
+calib_img = cv2.imread(r"C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\input\calib.bmp")
+img_on_line = calib_img.copy()
+height, width = calib_img.shape[:2]
+blank_img = np.zeros((height, width, 3))
+blank_img += 255 #←全ゼロデータに255を足してホワイトにする
 
 # グレースケール
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+gray = cv2.cvtColor(calib_img, cv2.COLOR_BGR2GRAY)
 cv2.imwrite("calendar_mod.png", gray)
 
 ## 反転 ネガポジ変換
@@ -37,7 +39,7 @@ for line in lines:
         y1_inner_left = y1
         y2_inner_left = y2
 # 線を引く
-red_lines_img = cv2.line(img2, (x1_inner_left,y1_inner_left), (x2_inner_left,y2_inner_left), (0,0,255), 1)
+red_lines_img = cv2.line(img_on_line, (x1_inner_left,y1_inner_left), (x2_inner_left,y2_inner_left), (0,0,255), 1)
 #インナー右
 for line in lines:
     x1, y1, x2, y2 = line[0]
@@ -46,8 +48,8 @@ for line in lines:
         x2_inner_right = x2
         y1_inner_right = y1
         y2_inner_right = y2
-red_lines_img = cv2.line(img2, (x1_inner_right,y1_inner_right), (x2_inner_right,y2_inner_right), (0,0,255), 1)
-cv2.imwrite("inner_line_on_photo.png", red_lines_img)
+red_lines_img = cv2.line(img_on_line, (x1_inner_right,y1_inner_right), (x2_inner_right,y2_inner_right), (0,0,255), 1)
+cv2.imwrite(output_folder+"/inner_line_on_photo.png", red_lines_img)
         
 #白背景に黒線を引く
 #インナー左
@@ -59,7 +61,7 @@ for line in lines:
         y1_inner_left = y1
         y2_inner_left = y2
 # 線を引く
-black_lines_img = cv2.line(img3, (x1_inner_left,y1_inner_left), (x2_inner_left,y2_inner_left), (0,0,0), 1)
+black_lines_img = cv2.line(blank_img, (x1_inner_left,y1_inner_left), (x2_inner_left,y2_inner_left), (0,0,0), 1)
 
 #インナー右
 for line in lines:
@@ -69,9 +71,7 @@ for line in lines:
         x2_inner_right = x2
         y1_inner_right = y1
         y2_inner_right = y2
-black_lines_img = cv2.line(img3, (x1_inner_right,y1_inner_right), (x2_inner_right,y2_inner_right), (0,0,0), 1)
-cv2.imwrite("inner_line.png", black_lines_img)
+black_lines_img = cv2.line(blank_img, (x1_inner_right,y1_inner_right), (x2_inner_right,y2_inner_right), (0,0,0), 1)
+cv2.imwrite(output_folder+"/inner_line.png", black_lines_img)
 
-cv2.imshow("edge",black_lines_img)
-cv2.waitKey()
-cv2.destroyAllWindows()
+
