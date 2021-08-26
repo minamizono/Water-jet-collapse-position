@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import pandas as pd
 
 #読見込む画像フォルダ
 input_folder = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\input')
@@ -36,10 +37,11 @@ contours, hierarchy = cv2.findContours(img_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_
 #一番大きな輪郭を抽出する
 max_contour = max(contours, key=lambda x: cv2.contourArea(x))
 
+
 #白色画像に最大輪郭を描きだす
 img_contour = cv2.drawContours(blank_img, max_contour, -1, (000, 000, 000), 1)
+#np.set_printoptions(threshold=np.inf)
+#print(np.argmax(max_contour,2))
+
 
 cv2.imwrite(output_folder+'/jet_surface.png',img_contour)
-
-
-print(max_contour.flatten())
