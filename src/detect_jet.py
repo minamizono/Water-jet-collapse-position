@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #読見込む画像フォルダ
 input_folder = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\input')
@@ -43,5 +44,21 @@ img_contour = cv2.drawContours(blank_img, max_contour, -1, (000, 000, 000), 1)
 #np.set_printoptions(threshold=np.inf)
 #print(np.argmax(max_contour,2))
 
+img_argmin_left = np.argmin(img_contour,1)
+#print(img_argmin_left)
+
+df = pd.DataFrame(img_argmin_left,columns=['a','b','c'])
+del df['b']
+del df['c']
+print(df)
+
+
+    #img_argmin_right = np.fliplr(img)
+    #cv2.imwrite(output_folder+'/test_after_right.png',img_argmin_right)
+    #img_argmin_right = np.argmin(img_argmin_right,1)
+    #img_argmin_right = cv2.flip(img_argmin_right, 1)
+    #print(img_argmin_right)
+df.plot()
+plt.show()
 
 cv2.imwrite(output_folder+'/jet_surface.png',img_contour)
