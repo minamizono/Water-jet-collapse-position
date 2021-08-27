@@ -15,12 +15,6 @@ del df['b']
 del df['c']
 print(df)
 
-
-    #img_argmin_right = np.fliplr(img)
-    #cv2.imwrite(output_folder+'/test_after_right.png',img_argmin_right)
-    #img_argmin_right = np.argmin(img_argmin_right,1)
-    #img_argmin_right = cv2.flip(img_argmin_right, 1)
-    #print(img_argmin_right)
 df.plot()
 plt.show()
 df.to_csv('test.csv')
