@@ -3,6 +3,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+df1 = pd.DataFrame({'one': [1,2,3], 'two': [10,20,30]}, index=['a','b','c'])
+df2 = pd.DataFrame({'one': [4], 'three': [400]}, index=['d'])
+
+df = pd.concat([df1,df2])
+
+print(df)
+
 #フォルダ指定
 output_folder = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output')
 
