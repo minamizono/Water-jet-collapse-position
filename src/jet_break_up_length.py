@@ -18,7 +18,8 @@ calib_img_dif = calib_img.copy() #差分をとるのに使用
 calib_img_dif = calib_img_dif.astype(np.float32)
 calib_img_dif = cv2.cvtColor(calib_img_dif,cv2.COLOR_BGR2GRAY)
 
-
+#======== pixel換算 =============#
+Pixel = 2
 
 #======== 壁面の検出プログラム =========#
 #== 白色画像作成 ==#
@@ -27,7 +28,7 @@ blank_img = np.zeros((height, width, 3))
 blank_img += 255 #←全ゼロデータに255を足してホワイトにする
 blank_img_right_wall = blank_img.copy()
 blank_img_left_wall = blank_img.copy()
-blank_img_jet = blank_img.copy()
+blank_ig_jet = blank_img.copy()
 #== グレースケール化 ==#
 calib_img_gray = cv2.cvtColor(calib_img,cv2.COLOR_BGR2GRAY)
 cv2.imwrite(output_folder_fig+'/calib_img_gray.bmp',calib_img_gray)
@@ -102,6 +103,7 @@ df_wall_gap.drop(['b3', 'c3'], axis=1, inplace=True)
 
 #======== 噴流崩壊の検出プログラム =========#
 #== DateFrameの入れ物を作成 ==#
+
 concat_gap_empty_left = np.zeros_like(wall_coordinate_left)
 concat_gap_left = pd.DataFrame(concat_gap_empty_left,columns=['A','B','C'])
 concat_gap_left.drop(['B', 'C'], axis=1, inplace=True)
@@ -192,18 +194,67 @@ for i in range(N):
     ###########################################################
 
 
+#y方向の距離をインデックス１に挿入する
+y_length = np.arange(1,height+1)
+y_length_df = pd.DataFrame(y_length,columns=['jet_break_up_length'])
+#print(y_length_df)
+
+
 #======= 集計した左の隙間がconcat_gapに集計される =======#
+#====== 生データ ======#
 #== 左のギャップ ==#
 concat_gap_left.drop(['A'], axis=1, inplace=True)
+concat_gap_left_copy = concat_gap_left.copy()
+concat_gap_left.insert(0,'jet_break_up_length',y_length_df)
 concat_gap_left.to_csv(output_folder_csv+'/test_left.csv')
-concat_gap_left.plot()
+concat_gap_left.plot(x ='jet_break_up_length')
 #== 右のギャップ ==#
 concat_gap_right.drop(['A'], axis=1, inplace=True)
+concat_gap_right_copy = concat_gap_right.copy()
+concat_gap_right.insert(0,'jet_break_up_length',y_length_df)
 concat_gap_right.to_csv(output_folder_csv+'/test_right.csv')
-concat_gap_right.plot()
+concat_gap_right.plot(x ='jet_break_up_length')
 #== ジェットの隙間 ==#
 concat_jet.drop(['A'], axis=1, inplace=True)
+concat_jet_copy = concat_jet.copy()
+concat_jet.insert(0,'jet_break_up_length',y_length_df)
 concat_jet.to_csv(output_folder_csv+'/test_jet.csv')
-concat_jet.plot()
+concat_jet.plot(x ='jet_break_up_length')
+#=====　基本的統計データ =======#
+#== 左側の隙間 ==#
+concat_gap_left_copy = concat_gap_left_copy.T
+concat_gap_left_describe = concat_gap_left_copy.describe().T
+concat_gap_left_describe.drop(['count','25%','50%','75%','std'],axis=1,inplace=True)
+concat_gap_left_describe.insert(0,'jet_break_up_length',y_length_df)
+concat_gap_left_describe = (concat_gap_left_describe.rename(columns={'mean': 'left_gap_mean', 'min': 'left_gap_min','max': 'left_gap_max'}))
+concat_gap_left_describe = concat_gap_left_describe * Pixel
+concat_gap_left_describe.to_csv(output_folder_csv+'/test_left_describe.csv')
+concat_gap_left_describe.plot(x ='jet_break_up_length')
+#== 右側の隙間 ==#
+concat_gap_right_copy = concat_gap_right_copy.T
+concat_gap_right_describe = concat_gap_right_copy.describe().T
+concat_gap_right_describe.drop(['count','25%','50%','75%','std'],axis=1,inplace=True)
+concat_gap_right_describe = (concat_gap_right_describe.rename(columns={'mean': 'right_gap_mean', 'min': 'right_gap_min','max': 'right_gap_max'}))
+concat_gap_right_describe.insert(0,'jet_break_up_length',y_length_df)
+concat_gap_right_describe = concat_gap_right_describe * Pixel
+concat_gap_right_describe.to_csv(output_folder_csv+'/test_right_describe.csv')
+concat_gap_right_describe.plot(x ='jet_break_up_length')
+#== ジェットの幅 ==#
+concat_jet_copy = concat_jet_copy.T
+concat_jet_copy = concat_jet_copy.fillna(0)
+concat_jet_describe = concat_jet_copy.describe().T
+concat_jet_describe.drop(['count','25%','50%','75%','std'],axis=1,inplace=True)
+concat_jet_describe = (concat_jet_describe.rename(columns={'mean': 'jet_wadth_mean', 'min': 'jet_width_min','max': 'jet_width_max'}))
+concat_jet_describe.insert(0,'jet_break_up_length',y_length_df)
+concat_jet_describe = concat_jet_describe * Pixel
+concat_jet_describe.to_csv(output_folder_csv+'/test_jet_describe.csv')
+concat_jet_describe.plot(x ='jet_break_up_length')
+#== 三つのグラフを一つにまとめる ==#
+graph_merge = pd.merge(concat_gap_left_describe,concat_gap_right_describe,on='jet_break_up_length')
+graph_merge = pd.merge(graph_merge,concat_jet_describe,on='jet_break_up_length')
+graph_merge.to_csv(output_folder_csv+'/test_merge_describe.csv')
+graph_merge.plot(x ='jet_break_up_length')
+
+
 
 plt.show()
