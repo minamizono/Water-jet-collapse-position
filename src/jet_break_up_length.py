@@ -6,20 +6,39 @@ import matplotlib.pyplot as plt
 from pandas.core.reshape.concat import concat
 
 #======== フォルダの指定 ========#
-input_folder = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\input')
-output_folder_graph = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output_graph')
-output_folder_fig = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output_fig')
-output_folder_csv = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output_csv')
+input_folder = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\input')                   # 処理する画像ファイルを選択する
+output_folder_graph = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output_graph')     # グラフ                を書き出すフォルダを選択する    
+output_folder_fig = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output_fig')         # 画像                  を書き出すフォルダを選択する
+output_folder_csv = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output_csv')         # csv_基本統計データ     を書き出すフォルダを選択する       
+output_folder_csv_original = (output_folder_csv+'\original')                                                # csv_originalデータ    を書き出すフォルダを選択する
+
+#======== グラフパラメータ定義 ============#
+plt.rcParams["font.family"] = "Times New Roman"      #全体のフォントを設定
+plt.rcParams["xtick.direction"] = "in"               #x軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
+plt.rcParams["ytick.direction"] = "in"               #y軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
+plt.rcParams['axes.grid'] = True                     # make grid
+plt.rcParams["xtick.minor.visible"] = True          #x軸補助目盛りの追加
+plt.rcParams["ytick.minor.visible"] = True          #y軸補助目盛りの追加
+plt.rcParams["xtick.major.width"] = 1.5              #x軸主目盛り線の線幅
+plt.rcParams["ytick.major.width"] = 1.5              #y軸主目盛り線の線幅
+plt.rcParams["xtick.minor.width"] = 1.0              #x軸補助目盛り線の線幅
+plt.rcParams["ytick.minor.width"] = 1.0              #y軸補助目盛り線の線幅
+plt.rcParams["xtick.major.size"] = 10                #x軸主目盛り線の長さ
+plt.rcParams["ytick.major.size"] = 10                #y軸主目盛り線の長さ
+plt.rcParams["xtick.minor.size"] = 5                #x軸補助目盛り線の長さ
+plt.rcParams["ytick.minor.size"] = 5                #y軸補助目盛り線の長さ
+plt.rcParams["font.size"] = 14                       #フォントの大きさ
+plt.rcParams["axes.linewidth"] = 1.5                 #囲みの太さ\
 
 #======== ファイルの読み込み ========#
-N = 2
+N = 1000
 calib_img =cv2.imread (input_folder+'/calib.bmp') #壁面検出に使用
 calib_img_dif = calib_img.copy() #差分をとるのに使用
 calib_img_dif = calib_img_dif.astype(np.float32)
 calib_img_dif = cv2.cvtColor(calib_img_dif,cv2.COLOR_BGR2GRAY)
 
 #======== pixel換算 =============#
-Pixel = 2
+Pixel = 1
 
 #======== 壁面の検出プログラム =========#
 #== 白色画像作成 ==#
@@ -122,7 +141,7 @@ wall_fliplr_coordinate = np.argmin(wall_fliplr,1)
 #== 画像の読み込み ==#
 for i in range(N):
     print('current batch is ; '+str(i+1)+'/'+str(N))
-    number_padded = format (i+1,'03')
+    number_padded = format (i+1,'07')
     img_val = cv2.imread(input_folder+'/'+str(number_padded)+'.bmp',cv2.IMREAD_GRAYSCALE)
     img_val = img_val.astype(np.float32)
     diff_img=calib_img_dif-img_val
@@ -139,7 +158,7 @@ for i in range(N):
     blank_img = np.zeros((height, width, 3))
     blank_img += 255 #←全ゼロデータに255を足してホワイトにする
     #== 輪郭を白色の紙に描写 ======================#
-    cv2.imwrite(output_folder_fig+'/jet_edge_img'+str(number_padded)+'.png', jet_surface) 
+    #cv2.imwrite(output_folder_fig+'/jet_edge_img'+str(number_padded)+'.png', jet_surface) 
     ######################
     # 座標取得 
     ######################
@@ -206,20 +225,20 @@ y_length_df = pd.DataFrame(y_length,columns=['jet_break_up_length'])
 concat_gap_left.drop(['A'], axis=1, inplace=True)
 concat_gap_left_copy = concat_gap_left.copy()
 concat_gap_left.insert(0,'jet_break_up_length',y_length_df)
-concat_gap_left.to_csv(output_folder_csv+'/test_left.csv')
-concat_gap_left.plot(x ='jet_break_up_length')
+concat_gap_left.to_csv(output_folder_csv_original+'/1_left_gap.csv')
+#concat_gap_left.plot(x ='jet_break_up_length')
 #== 右のギャップ ==#
 concat_gap_right.drop(['A'], axis=1, inplace=True)
 concat_gap_right_copy = concat_gap_right.copy()
 concat_gap_right.insert(0,'jet_break_up_length',y_length_df)
-concat_gap_right.to_csv(output_folder_csv+'/test_right.csv')
-concat_gap_right.plot(x ='jet_break_up_length')
+concat_gap_right.to_csv(output_folder_csv_original+'/2_right_gap.csv')
+#concat_gap_right.plot(x ='jet_break_up_length')
 #== ジェットの隙間 ==#
 concat_jet.drop(['A'], axis=1, inplace=True)
 concat_jet_copy = concat_jet.copy()
 concat_jet.insert(0,'jet_break_up_length',y_length_df)
-concat_jet.to_csv(output_folder_csv+'/test_jet.csv')
-concat_jet.plot(x ='jet_break_up_length')
+concat_jet.to_csv(output_folder_csv_original+'/3_jet_width.csv')
+#concat_jet.plot(x ='jet_break_up_length')
 #=====　基本的統計データ =======#
 #== 左側の隙間 ==#
 concat_gap_left_copy = concat_gap_left_copy.T
@@ -228,8 +247,8 @@ concat_gap_left_describe.drop(['count','25%','50%','75%','std'],axis=1,inplace=T
 concat_gap_left_describe.insert(0,'jet_break_up_length',y_length_df)
 concat_gap_left_describe = (concat_gap_left_describe.rename(columns={'mean': 'left_gap_mean', 'min': 'left_gap_min','max': 'left_gap_max'}))
 concat_gap_left_describe = concat_gap_left_describe * Pixel
-concat_gap_left_describe.to_csv(output_folder_csv+'/test_left_describe.csv')
-concat_gap_left_describe.plot(x ='jet_break_up_length')
+concat_gap_left_describe.to_csv(output_folder_csv+'/1_left_describe.csv')
+#concat_gap_left_describe.plot(x ='jet_break_up_length')
 #== 右側の隙間 ==#
 concat_gap_right_copy = concat_gap_right_copy.T
 concat_gap_right_describe = concat_gap_right_copy.describe().T
@@ -237,24 +256,39 @@ concat_gap_right_describe.drop(['count','25%','50%','75%','std'],axis=1,inplace=
 concat_gap_right_describe = (concat_gap_right_describe.rename(columns={'mean': 'right_gap_mean', 'min': 'right_gap_min','max': 'right_gap_max'}))
 concat_gap_right_describe.insert(0,'jet_break_up_length',y_length_df)
 concat_gap_right_describe = concat_gap_right_describe * Pixel
-concat_gap_right_describe.to_csv(output_folder_csv+'/test_right_describe.csv')
-concat_gap_right_describe.plot(x ='jet_break_up_length')
+concat_gap_right_describe.to_csv(output_folder_csv+'/2_right_describe.csv')
+#concat_gap_right_describe.plot(x ='jet_break_up_length')
 #== ジェットの幅 ==#
 concat_jet_copy = concat_jet_copy.T
-concat_jet_copy = concat_jet_copy.fillna(0)
 concat_jet_describe = concat_jet_copy.describe().T
 concat_jet_describe.drop(['count','25%','50%','75%','std'],axis=1,inplace=True)
 concat_jet_describe = (concat_jet_describe.rename(columns={'mean': 'jet_wadth_mean', 'min': 'jet_width_min','max': 'jet_width_max'}))
 concat_jet_describe.insert(0,'jet_break_up_length',y_length_df)
 concat_jet_describe = concat_jet_describe * Pixel
-concat_jet_describe.to_csv(output_folder_csv+'/test_jet_describe.csv')
-concat_jet_describe.plot(x ='jet_break_up_length')
+concat_jet_describe.to_csv(output_folder_csv+'/3_jet_describe.csv')
+#concat_jet_describe.plot(x ='jet_break_up_length')
 #== 三つのグラフを一つにまとめる ==#
 graph_merge = pd.merge(concat_gap_left_describe,concat_gap_right_describe,on='jet_break_up_length')
 graph_merge = pd.merge(graph_merge,concat_jet_describe,on='jet_break_up_length')
-graph_merge.to_csv(output_folder_csv+'/test_merge_describe.csv')
-graph_merge.plot(x ='jet_break_up_length')
+graph_merge.to_csv(output_folder_csv+'/4_merge_describe.csv')
+graph_merge_mean = (graph_merge.iloc[:,[0,1,4,7]]) #meanを取得
+#== グラフを描写する_平均値のデータ ==#
+graph_merge_mean.plot(x ='jet_break_up_length')
+plt.title("jet break up length")
+plt.xlabel("jet break up length [mm]")
+plt.ylabel("gap [mm]")
+plt.xlim(0, height*Pixel)
+plt.ylim(0, width*Pixel/2)
+plt.savefig(output_folder_graph+'/mean.png')
+plt.show()
 
-
-
+#== グラフを描写する_最大最少のデータ ==#
+graph_merge_min_and_max = (graph_merge.iloc[:,[0,2,5,9]]) #min&maxを取得
+graph_merge_min_and_max.plot(x ='jet_break_up_length')
+plt.title("jet break up length")
+plt.xlabel("jet break up length [mm]")
+plt.ylabel("gap [mm]")
+plt.xlim(0, height*Pixel)
+plt.ylim(0, width*Pixel/2)
+plt.savefig(output_folder_graph+'/min_and_max.png')
 plt.show()
