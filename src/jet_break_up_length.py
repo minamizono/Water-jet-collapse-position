@@ -1,6 +1,7 @@
 #======== ライブラリ読み込み ========#
 import cv2
 import numpy as np
+from numpy.lib.function_base import append
 import pandas as pd
 import matplotlib.pyplot as plt
 from pandas.core.reshape.concat import concat
@@ -37,14 +38,13 @@ plt.rcParams["font.size"] = 14                       #フォントの大きさ
 plt.rcParams["axes.linewidth"] = 1.5                 #囲みの太さ\
 
 #======== ファイルの読み込み ========#
-N = 2000
+N = 5
 calib_img =cv2.imread (input_folder+'/calib.bmp') #壁面検出に使用
 calib_img_dif = calib_img.copy() #差分をとるのに使用
 calib_img_dif = calib_img_dif.astype(np.float32)
 calib_img_dif = cv2.cvtColor(calib_img_dif,cv2.COLOR_BGR2GRAY)
-
 #======== pixel換算 =============#
-Pixel = 1
+Pixel = 0.1413
 
 #======== 壁面の検出プログラム =========#
 #== 白色画像作成 ==#
@@ -207,6 +207,14 @@ for i in range(N):
     concat_gap_right = pd.concat([concat_gap_right,right_gap_df2],axis=1)
     concat_jet = pd.concat([concat_jet,jet_width_df2],axis=1)
 
+#最大値をリストで抽出（加筆）    
+jet_width_df3 = concat_jet.idxmax()
+for row in jet_width_df3.index:
+    if (jet_width_df3.loc[row] == 0).any():
+        jet_width_df3.drop(row, axis=0, inplace=True)
+jet_width_df4 = jet_width_df3.values.tolist()
+print(jet_width_df4)
+#jet_width_df3.to_csv(output_folder_csv_original+'/4_jet_width_max.csv')
     #############################################################
     #==各ループの画像をプロットグラフpng保存したければこれ　==#
     #left_gap_df2.plot()
