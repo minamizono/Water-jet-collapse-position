@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from pandas.core.reshape.concat import concat
 import os
 #======== メインフォルダの指定 ========#
-folder = (r'D:\3_lab\1_data\2021_09_11_jet_breakup_img\mw24_ps0.15')
+folder = (r'D:\3_lab\1_data\2021_09_11_jet_breakup_img\mw24_ps0.10')
 input_folder = (folder + '\input')                   # 処理する画像ファイルを選択する
 #======= フォルダ作成 ========#
 os.makedirs(folder+'/output_graph',exist_ok=True)
@@ -38,7 +38,7 @@ plt.rcParams["font.size"] = 14                       #フォントの大きさ
 plt.rcParams["axes.linewidth"] = 1.5                 #囲みの太さ\
 
 #======== ファイルの読み込み ========#
-N = 5
+N = 2000
 calib_img =cv2.imread (input_folder+'/calib.bmp') #壁面検出に使用
 calib_img_dif = calib_img.copy() #差分をとるのに使用
 calib_img_dif = calib_img_dif.astype(np.float32)
@@ -207,14 +207,7 @@ for i in range(N):
     concat_gap_right = pd.concat([concat_gap_right,right_gap_df2],axis=1)
     concat_jet = pd.concat([concat_jet,jet_width_df2],axis=1)
 
-#最大値をリストで抽出（加筆）    
-jet_width_df3 = concat_jet.idxmax()
-for row in jet_width_df3.index:
-    if (jet_width_df3.loc[row] == 0).any():
-        jet_width_df3.drop(row, axis=0, inplace=True)
-jet_width_df4 = jet_width_df3.values.tolist()
-print(jet_width_df4)
-#jet_width_df3.to_csv(output_folder_csv_original+'/4_jet_width_max.csv')
+
     #############################################################
     #==各ループの画像をプロットグラフpng保存したければこれ　==#
     #left_gap_df2.plot()
@@ -226,6 +219,31 @@ print(jet_width_df4)
     #plt.show()
     ###########################################################
 
+
+
+
+#最大値をseriesで抽出（ジェット）    
+jet_width_max = concat_jet.idxmax()*Pixel #ジェットの最大噴流幅を取得
+for row in jet_width_max.index:
+    if (jet_width_max.loc[row] == 0).any():
+        jet_width_max.drop(row, axis=0, inplace=True) #0を削除
+jet_width_max_list = jet_width_max.values.tolist()
+jet_width_max_series = pd.Series(jet_width_max_list) #seriesに変換
+
+#最小値をseriesで抽出（左）    
+left_gap_min = concat_gap_left.idxmin()*Pixel #左ギャップの最小値を取得
+for row in left_gap_min.index:
+    if (left_gap_min.loc[row] == 0).any():
+        left_gap_min.drop(row, axis=0, inplace=True) #0を削除
+left_gap_min_list = left_gap_min.values.tolist() #seriesに変換
+left_gap_min_series = pd.Series(left_gap_min_list)
+#最小値をseriesで抽出（右）    
+right_gap_min = concat_gap_right.idxmin()*Pixel #右ギャップの最小値を取得
+for row in right_gap_min.index:
+    if (right_gap_min.loc[row] == 0).any():
+        right_gap_min.drop(row, axis=0, inplace=True) #0を削除
+right_gap_min_list = right_gap_min.values.tolist() #seriesに変換
+right_gap_min_series = pd.Series(right_gap_min_list)
 
 #y方向の距離をインデックス１に挿入する
 y_length = np.arange(1,height+1)
@@ -305,4 +323,39 @@ plt.ylabel("gap [mm]")
 plt.xlim(0, height*Pixel)
 plt.ylim(0, width*Pixel/2)
 plt.savefig(output_folder_graph+'/min_and_max.png')
+plt.show()
+
+
+#ヒストグラム作成 jet
+bins = np.linspace(0,180,37)
+class_value = (bins[:-1] + bins[1:]) / 2  # 階級値
+print(bins)     
+freq_jet = jet_width_max_series.value_counts(bins=bins, sort=False)
+freq_left_gap = left_gap_min_series.value_counts(bins=bins, sort=False)
+freq_right_gap = right_gap_min_series.value_counts(bins=bins, sort=False)
+
+#class_value = (bins[:-1] + bins[1:]) / 2  # 階級値
+#rel_freq = freq / scores.count()  # 相対度数
+#cum_freq = freq.cumsum()  # 累積度数
+#rel_cum_freq = rel_freq.cumsum()  # 相対累積度数
+
+
+
+
+dist = pd.DataFrame(
+    {   "Breakup  position of water jet [mm]": class_value,
+        "frequency_jet": freq_jet,
+        "frequency_left_gap": freq_left_gap,
+        "frequency_right_gap": freq_right_gap
+        },
+    index=freq_jet.index
+)
+dist
+dist.to_csv(output_folder_csv+'/5_histgram.csv')
+print(dist)
+
+dist.plot(x="Breakup  position of water jet [mm]", y=[ "frequency_jet", "frequency_left_gap","frequency_right_gap"],width=1, kind="bar")
+
+#dist.plot.bar(x="Breakup  position of water jet [mm]", y="frequency_jet", width=1, ec="k", lw=2)
+plt.savefig(output_folder_graph+'/jet_max_point.png')
 plt.show()
