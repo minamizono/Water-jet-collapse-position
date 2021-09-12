@@ -4,14 +4,20 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pandas.core.reshape.concat import concat
-
-#======== フォルダの指定 ========#
-input_folder = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\input')                   # 処理する画像ファイルを選択する
-output_folder_graph = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output_graph')     # グラフ                を書き出すフォルダを選択する    
-output_folder_fig = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output_fig')         # 画像                  を書き出すフォルダを選択する
-output_folder_csv = (r'C:\Users\pcabe1908\Documents\GitHub\Water-jet-collapse-position\output_csv')         # csv_基本統計データ     を書き出すフォルダを選択する       
-output_folder_csv_original = (output_folder_csv+'\original')                                                # csv_originalデータ    を書き出すフォルダを選択する
-
+import os
+#======== メインフォルダの指定 ========#
+folder = (r'D:\3_lab\1_data\2021_09_11_jet_breakup_img\mw24_ps0.15')
+input_folder = (folder + '\input')                   # 処理する画像ファイルを選択する
+#======= フォルダ作成 ========#
+os.makedirs(folder+'/output_graph',exist_ok=True)
+os.makedirs(folder+'/output_fig',exist_ok=True)
+os.makedirs(folder+'/output_csv',exist_ok=True)
+#======== サブフォルダの指定 ========#
+output_folder_graph = (folder + '\output_graph')     # グラフ を書き出すフォルダを選択する    
+output_folder_fig = (folder + '\output_fig')         # 画像を書き出すフォルダを選択する
+output_folder_csv = (folder + '\output_csv')         # csv_基本統計データを書き出すフォルダを選択する       
+output_folder_csv_original = (output_folder_csv+'\original')  # csv_originalデータを書き出すフォルダを選択する
+os.makedirs(output_folder_csv+'\original',exist_ok=True)
 #======== グラフパラメータ定義 ============#
 plt.rcParams["font.family"] = "Times New Roman"      #全体のフォントを設定
 plt.rcParams["xtick.direction"] = "in"               #x軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
@@ -31,7 +37,7 @@ plt.rcParams["font.size"] = 14                       #フォントの大きさ
 plt.rcParams["axes.linewidth"] = 1.5                 #囲みの太さ\
 
 #======== ファイルの読み込み ========#
-N = 1000
+N = 2000
 calib_img =cv2.imread (input_folder+'/calib.bmp') #壁面検出に使用
 calib_img_dif = calib_img.copy() #差分をとるのに使用
 calib_img_dif = calib_img_dif.astype(np.float32)
