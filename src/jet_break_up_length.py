@@ -19,6 +19,8 @@ output_folder_fig = (folder + '\output_fig')         # 画像を書き出すフ�
 output_folder_csv = (folder + '\output_csv')         # csv_基本統計データを書き出すフォルダを選択する       
 output_folder_csv_original = (output_folder_csv+'\original')  # csv_originalデータを書き出すフォルダを選択する
 os.makedirs(output_folder_csv+'\original',exist_ok=True)
+os.makedirs(output_folder_fig+'\jet',exist_ok=True)
+
 #======== グラフパラメータ定義 ============#
 plt.rcParams["font.family"] = "Times New Roman"      #全体のフォントを設定
 plt.rcParams["xtick.direction"] = "in"               #x軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
@@ -53,6 +55,7 @@ blank_img = np.zeros((height, width, 3))
 blank_img += 255 #←全ゼロデータに255を足してホワイトにする
 blank_img_right_wall = blank_img.copy()
 blank_img_left_wall = blank_img.copy()
+blank_img_both = blank_img.copy()
 blank_ig_jet = blank_img.copy()
 #== グレースケール化 ==#
 calib_img_gray = cv2.cvtColor(calib_img,cv2.COLOR_BGR2GRAY)
@@ -80,7 +83,7 @@ for line in calib_img_gray_nega_lines:
         x2_inner_right = x2
         y1_inner_right = y1
         y2_inner_right = y2
-inner_line = cv2.line(calib_img, (x1_inner_right,y1_inner_right), (x2_inner_right,y2_inner_right), (0,0,255), 3)
+inner_line = cv2.line(calib_img, (x1_inner_right,y1_inner_right), (x2_inner_right,y2_inner_right), (0,0,255), 1)
 blank_img_right_wall = cv2.line(blank_img_right_wall, (x1_inner_right,y1_inner_right), (x2_inner_right,y2_inner_right), (0,0,0), 1)
 #== 初期値リセット ==#
 x1_inner_left = 0
@@ -100,12 +103,16 @@ for line in calib_img_gray_nega_lines:
         x2_inner_left = x2
         y1_inner_left = y1
         y2_inner_left = y2
-inner_line = cv2.line(calib_img, (x1_inner_left,y1_inner_left), (x2_inner_left,y2_inner_left), (0,0,255), 3)
+inner_line = cv2.line(calib_img, (x1_inner_left,y1_inner_left), (x2_inner_left,y2_inner_left), (0,0,255), 1)
 blank_img_left_wall = cv2.line(blank_img_left_wall, (x1_inner_left,y1_inner_left), (x2_inner_left,y2_inner_left), (0,0,000), 1)
+inner_line_both  = cv2.addWeighted(src1=blank_img_left_wall,alpha=0.5,src2=blank_img_right_wall,beta=0.5,gamma=0)
+inner_line_both2 = inner_line_both.copy()
 #======== 検出壁面を描写 =========#
 cv2.imwrite(output_folder_fig+'/calib_img_lines.bmp', inner_line)
 cv2.imwrite(output_folder_fig+'/inner_right_line.bmp', blank_img_right_wall)
 cv2.imwrite(output_folder_fig+'/inner_left_line.bmp', blank_img_left_wall)
+cv2.imwrite(output_folder_fig+'/inner_both_line.bmp', inner_line_both)
+
 #======== 座標保持 ============#
 #== 左側の壁の座標を取得 ==#
 wall_coordinate_left = np.argmin(blank_img_left_wall,1)
@@ -159,12 +166,17 @@ for i in range(N):
     ret, img_binary = cv2.threshold(diff_img, 100, 255,cv2.THRESH_BINARY)
     contours, hierarchy = cv2.findContours(img_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     max_contour = max(contours, key=lambda x: cv2.contourArea(x))
-    jet_surface = cv2.drawContours(blank_img, max_contour, -1, (000, 000, 000), 1)
+    jet_surface = cv2.drawContours(blank_img, max_contour, -1, (000, 000, 000), 1) #無地に書き出す
+    jet_surface2 = cv2.drawContours(inner_line_both, max_contour, -1, (000, 000, 000), 1) #壁面込みで書き出す
+    jet_surface3 = cv2.drawContours(inner_line_both2, max_contour, -1, (000, 000, 000), 1) #壁面込みで書き出す
     #== blank_img一枚に上書きされないようにリセットする ===================#
     blank_img = np.zeros((height, width, 3))
     blank_img += 255 #←全ゼロデータに255を足してホワイトにする
+    inner_line_both = cv2.addWeighted(src1=blank_img_left_wall,alpha=0.5,src2=blank_img_right_wall,beta=0.5,gamma=0)
+   
     #== 輪郭を白色の紙に描写 ======================#
-    #cv2.imwrite(output_folder_fig+'/jet_edge_img'+str(number_padded)+'.png', jet_surface) 
+    #cv2.imwrite(output_folder_fig+'/jet_edge_img'+str(number_padded)+'.bmp', jet_surface) 
+    cv2.imwrite(output_folder_fig+'/jet/jet_wall'+str(number_padded)+'.bmp', jet_surface2) 
     ######################
     # 座標取得 
     ######################
@@ -219,31 +231,7 @@ for i in range(N):
     #plt.show()
     ###########################################################
 
-
-
-
-#最大値をseriesで抽出（ジェット）    
-jet_width_max = concat_jet.idxmax()*Pixel #ジェットの最大噴流幅を取得
-for row in jet_width_max.index:
-    if (jet_width_max.loc[row] == 0).any():
-        jet_width_max.drop(row, axis=0, inplace=True) #0を削除
-jet_width_max_list = jet_width_max.values.tolist()
-jet_width_max_series = pd.Series(jet_width_max_list) #seriesに変換
-
-#最小値をseriesで抽出（左）    
-left_gap_min = concat_gap_left.idxmin()*Pixel #左ギャップの最小値を取得
-for row in left_gap_min.index:
-    if (left_gap_min.loc[row] == 0).any():
-        left_gap_min.drop(row, axis=0, inplace=True) #0を削除
-left_gap_min_list = left_gap_min.values.tolist() #seriesに変換
-left_gap_min_series = pd.Series(left_gap_min_list)
-#最小値をseriesで抽出（右）    
-right_gap_min = concat_gap_right.idxmin()*Pixel #右ギャップの最小値を取得
-for row in right_gap_min.index:
-    if (right_gap_min.loc[row] == 0).any():
-        right_gap_min.drop(row, axis=0, inplace=True) #0を削除
-right_gap_min_list = right_gap_min.values.tolist() #seriesに変換
-right_gap_min_series = pd.Series(right_gap_min_list)
+cv2.imwrite(output_folder_fig+'/jet/jet_wall_result.bmp', jet_surface3) #jetすべての軌跡 
 
 #y方向の距離をインデックス１に挿入する
 y_length = np.arange(1,height+1)
@@ -325,11 +313,34 @@ plt.ylim(0, width*Pixel/2)
 plt.savefig(output_folder_graph+'/min_and_max.png')
 plt.show()
 
+#最大値をseriesで抽出（ジェット） 
+jet_width_max = concat_jet.idxmax()*Pixel #ジェットの最大噴流幅を取得
+print(jet_width_max)
+for row in jet_width_max.index:
+    if (jet_width_max.loc[row] == 0).any():
+        jet_width_max.drop(row, axis=0, inplace=True) #0を削除
+jet_width_max_list = jet_width_max.values.tolist()
+jet_width_max_series = pd.Series(jet_width_max_list) #seriesに変換
+
+#最小値をseriesで抽出（左）    
+left_gap_min = concat_gap_left.idxmin()*Pixel #左ギャップの最小値を取得
+for row in left_gap_min.index:
+    if (left_gap_min.loc[row] == 0).any():
+        left_gap_min.drop(row, axis=0, inplace=True) #0を削除
+left_gap_min_list = left_gap_min.values.tolist() #seriesに変換
+left_gap_min_series = pd.Series(left_gap_min_list)
+#最小値をseriesで抽出（右）    
+right_gap_min = concat_gap_right.idxmin()*Pixel #右ギャップの最小値を取得
+for row in right_gap_min.index:
+    if (right_gap_min.loc[row] == 0).any():
+        right_gap_min.drop(row, axis=0, inplace=True) #0を削除
+right_gap_min_list = right_gap_min.values.tolist() #seriesに変換
+right_gap_min_series = pd.Series(right_gap_min_list)
 
 #ヒストグラム作成 jet
 bins = np.linspace(0,180,37)
 class_value = (bins[:-1] + bins[1:]) / 2  # 階級値
-print(bins)     
+#print(bins)     
 freq_jet = jet_width_max_series.value_counts(bins=bins, sort=False)
 freq_left_gap = left_gap_min_series.value_counts(bins=bins, sort=False)
 freq_right_gap = right_gap_min_series.value_counts(bins=bins, sort=False)
@@ -338,10 +349,6 @@ freq_right_gap = right_gap_min_series.value_counts(bins=bins, sort=False)
 #rel_freq = freq / scores.count()  # 相対度数
 #cum_freq = freq.cumsum()  # 累積度数
 #rel_cum_freq = rel_freq.cumsum()  # 相対累積度数
-
-
-
-
 dist = pd.DataFrame(
     {   "Breakup  position of water jet [mm]": class_value,
         "frequency_jet": freq_jet,
@@ -352,10 +359,15 @@ dist = pd.DataFrame(
 )
 dist
 dist.to_csv(output_folder_csv+'/5_histgram.csv')
-print(dist)
-
+#print(dist)
 dist.plot(x="Breakup  position of water jet [mm]", y=[ "frequency_jet", "frequency_left_gap","frequency_right_gap"],width=1, kind="bar")
 
 #dist.plot.bar(x="Breakup  position of water jet [mm]", y="frequency_jet", width=1, ec="k", lw=2)
 plt.savefig(output_folder_graph+'/jet_max_point.png')
 plt.show()
+
+
+#f = open(folder+'/mean.txt', 'w')
+#f.write('ジェット最大横幅の崩壊平均値位置_'+str(jet_width_max_series.mean())+'\n')
+#f.write('右ギャップ最少の崩壊平均位置_'+str(right_gap_min_series.mean())+'\n')
+#f.write('左ギャップ最少の崩壊平均値_'+str(left_gap_min_series.mean())+'\n')
